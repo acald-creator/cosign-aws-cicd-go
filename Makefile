@@ -1,5 +1,5 @@
 NAME ?=phxvlabs-cosign-cicd
-IMAGE ?=distroless-base
+IMAGE ?=foto-sharing-app
 VERSION ?=0.0.1-dev
 GOLANG_VERSION ?=1.18.3
 AWS_REGION ?=us-east-2
