@@ -1,0 +1,57 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Resource": [
+                "*"
+            ],
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "sts:AssumeRole",
+                "codebuild:*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Resource": [
+                "${aws_ecr_repository.ecr.arn}"
+            ],
+            "Action": [
+                "ecr:*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Resource": [
+                "*"
+            ],
+            "Action": [
+                "ecr:GetAuthorizationToken"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.codebuild_s3.arn}",
+                "${aws_s3_bucket.codebuild_s3.arn}/*",
+                "${aws_s3_bucket.codepipeline_bucket.arn}",
+                "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Resource": [
+                "${aws_kms_key.cosign.arn}"
+            ],
+            "Action": [
+                "kms:*"
+            ]
+        }
+    ]
+}
