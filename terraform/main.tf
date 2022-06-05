@@ -1,11 +1,11 @@
 resource "aws_codecommit_repository" "cosign" {
-  repository_name = "repository"
+  repository_name = "foto-sharing-cicd"
   default_branch  = "main"
-  description     = "This is a sample app repository for ${var.name}"
+  description     = "This is a simple Photo sharing app for ${var.name}"
 }
 
 resource "aws_ecr_repository" "ecr" {
-  name                 = "distroless-base"
+  name                 = "foto-sharing-app"
   image_tag_mutability = "IMMUTABLE"
   image_scanning_configuration {
     scan_on_push = true
