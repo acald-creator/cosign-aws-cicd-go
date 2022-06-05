@@ -17,7 +17,7 @@ aws_acount:
 	$(ACCOUNT_ID)
 
 docker_build:
-	 docker build https://raw.githubusercontent.com/acald-creator/foto-sharing-in-go/main/Dockerfile.debug -t $(ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE):$(VERSION)
+	 docker build https://github.com/acald-creator/foto-sharing-in-go.git\#main -t $(ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE):$(VERSION)
 
 .SILENT: ecr_auth
 ecr_auth:
