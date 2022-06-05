@@ -72,8 +72,8 @@ resource "aws_iam_role_policy" "codebuild" {
       "Resource": [
         "${aws_s3_bucket.codebuild_s3.arn}",
         "${aws_s3_bucket.codebuild_s3.arn}/*",
-        "${aws_s3_bucket.codepipeline_bucket.arn}",
-        "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+        "${aws_s3_bucket.codepipeline_s3.arn}",
+        "${aws_s3_bucket.codepipeline_s3.arn}/*"
       ]
     },
     {

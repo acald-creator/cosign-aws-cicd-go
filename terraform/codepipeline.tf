@@ -1,9 +1,9 @@
-resource "aws_s3_bucket" "codepipeline_bucket" {
+resource "aws_s3_bucket" "codepipeline_s3" {
   bucket = "${var.name}-cp"
 }
 
-resource "aws_s3_bucket_acl" "codepipeline_bucket_acl" {
-  bucket = aws_s3_bucket.codepipeline_bucket.id
+resource "aws_s3_bucket_acl" "codepipeline_s3_acl" {
+  bucket = aws_s3_bucket.codepipeline_s3.id
   acl    = "private"
 }
 
@@ -43,8 +43,8 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
         "s3:PutObject"
       ],
       "Resource": [
-        "${aws_s3_bucket.codepipeline_bucket.arn}",
-        "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+        "${aws_s3_bucket.codepipeline_s3.arn}",
+        "${aws_s3_bucket.codepipeline_s3.arn}/*"
       ]
     },
     {
@@ -65,7 +65,7 @@ resource "aws_codepipeline" "codepipeline" {
   role_arn = aws_iam_role.codepipeline_role.arn
 
   artifact_store {
-    location = aws_s3_bucket.codepipeline_bucket.bucket
+    location = aws_s3_bucket.codepipeline_s3.bucket
     type     = "S3"
 
   }
