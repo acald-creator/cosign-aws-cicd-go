@@ -1,31 +1,21 @@
-resource "aws_codecommit_repository" "cosign" {
-  repository_name = "foto-sharing-cicd"
-  default_branch  = "main"
-  description     = "This is a simple Photo sharing app for ${var.name}"
+data "aws_region" "current" {}
+
+resource "aws_default_subnet" "default" {
+  availability_zone = "${data.aws_region.current.name}a"
 }
 
-resource "aws_ecr_repository" "ecr" {
-  name                 = "foto-sharing-app"
-  image_tag_mutability = "IMMUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-  tags = {
-    env = var.name
-  }
+output "cluster_arn" {
+  value = aws_ecs_cluster.phxvlabs-ecs-dev.arn
 }
 
-resource "aws_kms_key" "cosign" {
-  description             = "Cosign Key"
-  deletion_window_in_days = 10
-  tags = {
-    env = var.name
-  }
-  key_usage                = "SIGN_VERIFY"
-  customer_master_key_spec = "RSA_4096"
+output "unsigned_task_arn" {
+  value = aws_ecs_task_definition.unsigned.arn
 }
 
-resource "aws_kms_alias" "cosign" {
-  name          = "alias/${var.name}"
-  target_key_id = aws_kms_key.cosign.key_id
+output "signed_task_arn" {
+  value = aws_ecs_task_definition.signed.arn
+}
+
+output "subnet_id" {
+  value = aws_default_subnet.default.id
 }
