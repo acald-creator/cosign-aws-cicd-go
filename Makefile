@@ -1,18 +1,19 @@
 NAME ?=phxvlabs-cosign-cicd
 IMAGE ?=foto-sharing-app
-VERSION ?=0.0.3-dev-signed
+VERSION ?=0.0.4-dev-signed
 GOLANG_VERSION ?=1.18.3
 AWS_REGION ?=us-east-2
 AWS_DEFAULT_REGION = ${AWS_REGION}
 STACK_NAME = ${NAME}-stack
 SAM_TEMPLATE = template.yml
 PACKAGED_TEMPLATE = packaged.yml
-
 REPO_INFO ?= $(shell git config --get remote.origin.url)
 COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
 COSIGN_ROLE_NAME ?= "$(NAME)-codebuild"
 ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
 AWS_SDK_LOAD_CONFIG="true"
+IMAGE_URL_SIGNED ?= 399948395311.dkr.ecr.us-east-2.amazonaws.com/foto-sharing-app:0.0.3-dev-signed@sha256:7c39babf747e352bc564151748ecf4f299975190104a2124dd6ca714b485daab
+IMAGE_URL_UNSIGNED ?= 399948395311.dkr.ecr.us-east-2.amazonaws.com/foto-sharing-app:0.0.1-dev-unsigned@sha256:cd9697a72e58a0dc837857e587b2cd9866b3df5bc6dcc33beba60f5bf81e9ac3
 
 export AWS_REGION AWS_DEFAULT_REGION
 
@@ -149,11 +150,22 @@ tf_plan:
 
 tf_apply:
 	cd terraform/ && \
-	terraform apply -auto-approve
+	terraform apply \
+		-var="name=${NAME}" \
+		-var="image_url_signed=${IMAGE_URL_SIGNED}" \
+		-var="image_url_unsigned=${IMAGE_URL_UNSIGNED}" \
+		-auto-approve
 
 tf_destroy:
 	cd terraform/ && \
 	terraform destroy
+
+tf_refresh:
+	cd terraform/ && \
+	terraform refresh \
+		-var="name=${NAME}" \
+		-var="image_url_signed=${IMAGE_URL_SIGNED}" \
+		-var="image_url_unsigned=${IMAGE_URL_UNSIGNED}"
 
 sign: ecr_auth
 	cosign sign --key awskms:///alias/$(NAME) $(ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE):$(VERSION)
