@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ecs_cosign_verify
+  
+  Template for ecs_cosign_verify
+
+Globals:
+  Function:
+    Timeout: 5
+Parameters:
+    KeyArn:
+      Type: String
+      Default: ""
+    KeyPem:
+      Type: String
+      Default: ""
+Conditions:
+  IsKeyArn: !Not [!Equals [!Ref KeyArn, ""]]
+Resources:
+  TeamNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: !GetAtt TeamNotificationTopicKey.Arn
+  TeamNotificationTopicKey:
+    Type: AWS::KMS::Key
+    Properties:
+      KeyPolicy:
+        Statement:
+          - Action: kms:*
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Resource: '*'
+      EnableKeyRotation: true
+  KmsAccess:
+    Type: AWS::IAM::Policy
+    Condition: IsKeyArn
+    Properties:
+      PolicyDocument:
+        Effect: Allow
+        Action:
+          - kms:GetPublicKey
+          - kms:DescribeKey
+        Resource: !Ref KeyArn
+      PolicyName: KmsAccess
+      Roles:
+        - !GetAtt ECSApprovedContainerRegistryFunction.Role
+  ECSApprovedContainerRegistryFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: cosign-ecs-function/
+      Handler: cosign-ecs-function
+      Runtime: go1.x
+      Timeout: 20
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref TeamNotificationTopic
+          COSIGN_KEY_ARN: !Ref KeyArn
+          COSIGN_KEY_PEM: !Ref KeyPem
+      Tracing: Active
+      MemorySize: 512
+      Policies:
+      - AWSXrayWriteOnlyAccess
+      - AWSLambdaBasicExecutionRole
+      - SNSPublishMessagePolicy:
+          TopicName: 
+            !Ref TeamNotificationTopic
+      - Statement:  # Stop unauthorized tasks
+        - Sid: ECSTaskPolicy
+          Effect: Allow
+          Action:
+          - ecs:StopTask
+          Resource: !Sub 'arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/*' 
+      - Statement:  # KMS key for communication with SNS
+        - Sid: KMSPolicy
+          Effect: Allow
+          Action:
+          - kms:GenerateDataKey
+          - kms:Decrypt
+          Resource: !GetAtt TeamNotificationTopicKey.Arn
+      - Statement:  # Cosign needs access images/signatures to verify.
+        - Sid: ECRPolicy
+          Effect: Allow
+          Action:
+            - ecr:*
+          Resource: '*'
+      - Statement:  # Notify about invalid signatures via SNS
+          - Sid: SNSPublishPolicy
+            Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: !Ref TeamNotificationTopic
+      Events:
+        Trigger:
+          Type: CloudWatchEvent 
+          Properties:
+            Pattern:
+              source:
+                - aws.ecs
+              detail-type:
+                - ECS Task State Change
+                - ECS Container Instance State Change
+              detail:
+                desiredStatus:
+                  - RUNNING
+                  - PENDING
+                  - ACTIVATING
+                  - PROVISIONING
